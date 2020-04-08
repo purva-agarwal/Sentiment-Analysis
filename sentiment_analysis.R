@@ -1,22 +1,19 @@
-library(Rserve)
-Rserve(args = "--no-save")
-install.packages("xlsx")
+library(Rserve) #External Connection for Tableau
+Rserve(args = "--no-save") #External Connection for Tableau
 library(xlsx)
 library(tm)
-library(wordcloud)
 library(ROAuth)
 library(openssl)
 library(httpuv)
 library(twitteR)
 library(SnowballC)
 library(syuzhet)
-library(ggplot2)
 library(dplyr)
 library(scales)
 library(SentimentAnalysis)
 library(sentimentr)
 
-#Twitter API's
+#Twitter API's and tokens
 consumer_key <- '*****'
 consumer_secret <- '****'
 access_token <- '****'
@@ -28,7 +25,7 @@ realDonaldTrump <- searchTwitter("@realDonaldTrump", n=10000, lang="en")
 trump_tweets <- twListToDF(realDonaldTrump)
 View(trump_tweets)
 
-#Create Excel Sheet
+#Create and Write into Excel Sheet
 write.xlsx(trump_tweets, file="E:/BI/datasets/data.xlsx", sheetName="Sheet1", col.names=TRUE, row.names=TRUE, append=FALSE)
 
 #Create Courpus w.r.t text column
@@ -67,7 +64,7 @@ inspect(corpus[1:5])
 corpus <- tm_map(corpus, removeNumbers)
 inspect(corpus[1:5])
 
-#Remove Non-Ascii Characters
+#Remove Weird symbols(emojis)
 removenonascii <- function(x) gsub("[^a-zA-Z0-9 ]","\\1", x)
 corpus <- tm_map(corpus, content_transformer(removenonascii))
 inspect(corpus[1:5])
@@ -100,13 +97,13 @@ trump_tweets_data <- as.character(corpus)
 class(trump_tweets_data)
 
 
-#Create corpus for column status source
+#Create corpus for status_source column
 corpus2 <- iconv(trump_tweets$statusSource, to = "utf-8")
 corpus2 <- Corpus(VectorSource(corpus2))
 inspect(corpus2[1:5])
 #Replace html tags with ""
-removehttp <- function(x) gsub('<.*?>', "", x)
-corpus2 <- tm_map(corpus2, content_transformer(removehttp))
+removehref <- function(x) gsub('<.*?>', "", x)
+corpus2 <- tm_map(corpus2, content_transformer(removehref))
 inspect(corpus2[1:5])
 #Convert corpus to dataframe
 status <- data.frame(text = get("content", corpus2))
